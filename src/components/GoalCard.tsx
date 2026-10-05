@@ -2,14 +2,11 @@ import { MoreHorizontal } from 'lucide-react'
 import { useState } from 'react'
 import {
   calculateGoalProgress,
-  formatGoalDateRange,
   getGoalDurationInfo,
 } from '../goals/dates'
 import {
   CATEGORY_DETAILS,
   PRIORITY_DETAILS,
-  REMINDER_LABELS,
-  STATUS_DETAILS,
 } from '../goals/labels'
 import type { Goal } from '../goals/types'
 
@@ -36,7 +33,6 @@ export function GoalCard({
 
   const progress = calculateGoalProgress(goal)
   const durationInfo = getGoalDurationInfo(goal)
-  const statusConfig = STATUS_DETAILS[durationInfo.statusType]
   const categoryConfig = CATEGORY_DETAILS[goal.category] || CATEGORY_DETAILS.Other
   const priorityConfig = PRIORITY_DETAILS[goal.priority]
 
@@ -47,167 +43,115 @@ export function GoalCard({
   const completedMilestones = goal.milestones.filter((m) => m.completed).length
   const totalMilestones = goal.milestones.length
 
-  const cardClasses = [
-    'neu-goal-card',
-    isOverdue ? 'is-overdue' : '',
-    isCompleted ? 'is-completed' : '',
-    isPaused ? 'is-paused' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  // Friendly motivating message
+  const motivationText = isCompleted
+    ? 'Goal completed! 🎉'
+    : isOverdue
+    ? '⚠️ Past deadline! You got this!'
+    : progress >= 75
+    ? 'Almost there! 🚀'
+    : progress >= 40
+    ? "You're doing great! 🔥"
+    : 'Keep going! 💪'
 
   return (
-    <article className={cardClasses}>
+    <article className={`fun-card goal-card ${isOverdue ? 'is-overdue' : ''} ${isCompleted ? 'is-completed' : ''}`}>
       {isOverdue ? (
-        <div className="goal-overdue-banner" role="alert">
-          <span className="overdue-icon">⚠️</span>
-          <span>
-            <strong>Overdue:</strong> {durationInfo.overdueDays}{' '}
-            {durationInfo.overdueDays === 1 ? 'day' : 'days'} past deadline.
-          </span>
+        <div className="goal-overdue-banner">
+          <span>⚠️</span>
+          <span><strong>Overdue:</strong> {durationInfo.overdueDays} days past deadline</span>
         </div>
       ) : null}
 
       <div className="goal-card-top">
         <div className="goal-title-group" onClick={() => onOpenDetails(goal)}>
           <span
-            className="neu-category-tag"
-            style={{
-              backgroundColor: categoryConfig.bg,
-              color: categoryConfig.color,
-            }}
+            className="category-badge-pill"
+            style={{ backgroundColor: categoryConfig.bg, color: categoryConfig.color }}
           >
-            <span className="category-emoji">{categoryConfig.icon}</span>
+            <span>{categoryConfig.icon}</span>
             <span>{goal.category}</span>
           </span>
           <h3 className="goal-card-title">{goal.title}</h3>
         </div>
 
-        <div className="goal-badges-group">
-          <span
-            className={`neu-priority-chip priority-${goal.priority}`}
-            title={`Priority: ${priorityConfig.label}`}
-          >
+        <div className="goal-badges-col">
+          <span className={`priority-tag priority-${goal.priority}`}>
             {priorityConfig.label}
-          </span>
-          <span
-            className={`neu-status-pill ${statusConfig.badgeClass || ''}`}
-            style={{
-              backgroundColor: statusConfig.bg,
-              color: statusConfig.color,
-            }}
-          >
-            <span className="status-dot" aria-hidden="true" />
-            {statusConfig.label}
           </span>
         </div>
       </div>
 
       {goal.description ? (
-        <p className="goal-description" onClick={() => onOpenDetails(goal)}>
+        <p className="goal-card-desc" onClick={() => onOpenDetails(goal)}>
           {goal.description}
         </p>
       ) : null}
 
       <div className="goal-progress-section" onClick={() => onOpenProgress(goal)}>
-        <div className="goal-progress-numbers">
-          <span className="progress-label">Progress</span>
-          <span className="progress-percent-val">{progress}%</span>
+        <div className="goal-progress-header">
+          <span className="goal-motivation-tag">{motivationText}</span>
+          <span className="goal-progress-percent">{progress}%</span>
         </div>
-        <div className="neu-track-inset" aria-hidden="true">
+
+        <div className="fun-progress-track">
           <div
-            className={`neu-progress-fill-bar ${isCompleted ? 'fill-completed' : isOverdue ? 'fill-overdue' : 'fill-default'}`}
+            className={`fun-progress-fill ${isCompleted ? 'fill-completed' : isOverdue ? 'fill-overdue' : ''}`}
             style={{ width: `${progress}%` }}
           />
         </div>
-        {goal.progressMode === 'target' && goal.targetValue ? (
-          <p className="target-units-copy">
-            {goal.currentValue ?? 0} / {goal.targetValue} {goal.unit || 'units'}
-          </p>
-        ) : null}
-      </div>
 
-      <div className="goal-meta-grid neu-inset-well-sm" onClick={() => onOpenDetails(goal)}>
-        <div className="meta-row">
-          <span className="meta-icon" aria-hidden="true">
-            📅
+        <div className="goal-progress-footer">
+          <span className="goal-remaining-days">
+            {durationInfo.statusType === 'active' && durationInfo.daysRemaining !== undefined
+              ? `⏳ ${durationInfo.daysRemaining} days left`
+              : durationInfo.statusText}
           </span>
-          <span className="meta-text">
-            {formatGoalDateRange(goal.startDate, goal.endDate)}
-          </span>
+          {totalMilestones > 0 ? (
+            <span className="goal-milestones-count">
+              ☑️ {completedMilestones}/{totalMilestones} milestones
+            </span>
+          ) : null}
         </div>
-
-        <div className="meta-row">
-          <span className="meta-icon" aria-hidden="true">
-            {isOverdue ? '⚠️' : isCompleted ? '🏆' : '⏳'}
-          </span>
-          <span className={`meta-text ${isOverdue ? 'text-overdue' : ''}`}>
-            {durationInfo.statusText}
-          </span>
-        </div>
-
-        {totalMilestones > 0 ? (
-          <div className="meta-row">
-            <span className="meta-icon" aria-hidden="true">
-              ☑️
-            </span>
-            <span className="meta-text">
-              Milestones: {completedMilestones} / {totalMilestones}
-            </span>
-          </div>
-        ) : null}
-
-        {goal.reminder.enabled && goal.reminder.option !== 'none' ? (
-          <div className="meta-row reminder-row">
-            <span className="meta-icon" aria-hidden="true">
-              🔔
-            </span>
-            <span className="meta-text">
-              Reminder: {REMINDER_LABELS[goal.reminder.option]}
-              {goal.reminder.time ? ` (${goal.reminder.time})` : ''}
-            </span>
-          </div>
-        ) : null}
       </div>
 
       <div className="goal-card-actions">
-        <button
-          type="button"
-          className="neu-pill-btn secondary btn-sm"
-          onClick={() => onOpenProgress(goal)}
-        >
-          Update
-        </button>
-
-        <button
-          type="button"
-          className="neu-pill-btn ghost btn-sm"
-          onClick={() => onOpenDetails(goal)}
-        >
-          Details
-        </button>
-
-        <button
-          type="button"
-          className="neu-pill-btn ghost btn-sm"
-          onClick={() => onEdit(goal)}
-        >
-          Edit
-        </button>
+        <div className="goal-actions-left">
+          <button
+            type="button"
+            className="fun-btn fun-btn-soft btn-sm"
+            onClick={() => onOpenProgress(goal)}
+          >
+            Progress
+          </button>
+          <button
+            type="button"
+            className="fun-btn fun-btn-ghost btn-sm"
+            onClick={() => onOpenDetails(goal)}
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            className="fun-btn fun-btn-ghost btn-sm"
+            onClick={() => onEdit(goal)}
+          >
+            Edit
+          </button>
+        </div>
 
         <div className="more-actions-wrap">
           <button
             type="button"
-            className="neu-icon-btn btn-sm"
+            className="fun-icon-btn btn-sm"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="More actions"
-            aria-expanded={menuOpen}
           >
             <MoreHorizontal size={16} />
           </button>
 
           {menuOpen ? (
-            <div className="card-dropdown-menu neu-card-raised" role="menu">
+            <div className="fun-dropdown-menu">
               <button
                 type="button"
                 className="dropdown-item"
@@ -216,7 +160,7 @@ export function GoalCard({
                   onToggleComplete(goal.id)
                 }}
               >
-                {isCompleted ? '↩ Mark Incomplete' : '✓ Mark Completed'}
+                {isCompleted ? '↩ Reopen Goal' : '✓ Complete Goal'}
               </button>
               <button
                 type="button"

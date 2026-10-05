@@ -6,6 +6,12 @@ import { Dashboard } from './pages/Dashboard'
 import { Goals } from './pages/Goals'
 import { Tasks } from './pages/Tasks'
 import { Settings } from './pages/Settings'
+import { Water } from './pages/Water'
+import { Walking } from './pages/Walking'
+import { Expenses } from './pages/Expenses'
+import { Learning } from './pages/Learning'
+import { Journal } from './pages/Journal'
+import { Analytics } from './pages/Analytics'
 import type { PageId } from './types'
 
 function App() {
@@ -25,6 +31,18 @@ function App() {
     page = <Goals />
   } else if (currentPage === 'tasks') {
     page = <Tasks />
+  } else if (currentPage === 'water') {
+    page = <Water />
+  } else if (currentPage === 'walking' || currentPage === 'activity') {
+    page = <Walking />
+  } else if (currentPage === 'expenses') {
+    page = <Expenses />
+  } else if (currentPage === 'learning') {
+    page = <Learning />
+  } else if (currentPage === 'journal') {
+    page = <Journal />
+  } else if (currentPage === 'analytics') {
+    page = <Analytics />
   } else if (currentPage === 'settings') {
     page = <Settings />
   }

@@ -11,6 +11,13 @@ type BottomNavProps = {
   onToggleMore: () => void
 }
 
+const MOBILE_LABELS: Record<string, string> = {
+  dashboard: 'Home',
+  goals: 'Goals',
+  tasks: 'Tasks',
+  analytics: 'Stats',
+}
+
 export function BottomNav({
   currentPage,
   moreOpen,
@@ -24,49 +31,54 @@ export function BottomNav({
     moreOpen || moreItems.some((item) => item.id === currentPage)
 
   return (
-    <nav className="bottom-nav-dock" aria-label="Mobile Navigation">
-      <div className="bottom-nav-inner">
+    <nav className="mobile-bottom-bar" aria-label="Mobile Navigation">
+      <div className="mobile-bottom-inner">
         {MOBILE_PRIMARY_IDS.map((id) => {
           const item = NAV_ITEMS.find((navItem) => navItem.id === id)
           if (!item) return null
 
           const isActive = item.id === currentPage && !moreOpen
           const variant = PAGE_VARIANTS[item.id] || 'blue'
+          const label = MOBILE_LABELS[item.id] || item.label
 
           return (
             <button
               key={item.id}
               type="button"
-              className={`bottom-nav-btn ${isActive ? 'is-active' : ''}`}
+              className={`mobile-tab-btn ${isActive ? 'is-active' : ''}`}
               onClick={() => onNavigate(item.id)}
-              aria-label={item.label}
+              aria-label={label}
               aria-current={isActive ? 'page' : undefined}
             >
-              <IconTile
-                icon={<NavIcon id={item.id} size={20} />}
-                variant={variant}
-                size="md"
-                inset={isActive}
-              />
-              <span className="bottom-nav-label">{item.label}</span>
+              <div className="tab-icon-wrap">
+                <IconTile
+                  icon={<NavIcon id={item.id} size={22} />}
+                  variant={variant}
+                  size="sm"
+                  inset={isActive}
+                />
+              </div>
+              <span className="mobile-tab-label">{label}</span>
             </button>
           )
         })}
 
         <button
           type="button"
-          className={`bottom-nav-btn ${isMoreActive ? 'is-active' : ''}`}
+          className={`mobile-tab-btn ${isMoreActive ? 'is-active' : ''}`}
           onClick={onToggleMore}
           aria-expanded={moreOpen}
           aria-label="More sections"
         >
-          <IconTile
-            icon={<MoreHorizontal size={20} strokeWidth={2.2} />}
-            variant="slate"
-            size="md"
-            inset={isMoreActive}
-          />
-          <span className="bottom-nav-label">More</span>
+          <div className="tab-icon-wrap">
+            <IconTile
+              icon={<MoreHorizontal size={22} strokeWidth={2.5} />}
+              variant="slate"
+              size="sm"
+              inset={isMoreActive}
+            />
+          </div>
+          <span className="mobile-tab-label">More</span>
         </button>
       </div>
     </nav>

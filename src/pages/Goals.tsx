@@ -121,7 +121,7 @@ export function Goals() {
         <div className="page-toolbar-actions">
           <button
             type="button"
-            className="button-secondary test-notif-btn"
+            className="fun-btn fun-btn-soft test-notif-btn"
             onClick={handleTestNotification}
             title="Test desktop notifications"
           >
@@ -129,10 +129,10 @@ export function Goals() {
           </button>
           <button
             type="button"
-            className="button-primary add-goal-btn"
+            className="fun-btn fun-btn-primary add-goal-btn"
             onClick={handleOpenAdd}
           >
-            + Add Goal
+            🚀 + Add Goal
           </button>
         </div>
       </div>

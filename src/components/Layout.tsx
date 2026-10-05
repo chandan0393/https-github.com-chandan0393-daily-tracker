@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import type { PageId } from '../types'
 import { BottomNav } from './BottomNav'
+import { MobileHeader } from './MobileHeader'
 import { MoreMenu } from './MoreMenu'
 import { Sidebar } from './Sidebar'
 
@@ -22,6 +23,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
     <div className="app-shell">
       <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
       <div className="content-wrap">
+        <MobileHeader currentPage={currentPage} onNavigate={handleNavigate} />
         {moreOpen ? (
           <MoreMenu currentPage={currentPage} onNavigate={handleNavigate} />
         ) : null}

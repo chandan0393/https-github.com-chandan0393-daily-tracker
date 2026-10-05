@@ -14,32 +14,40 @@ export function MoreMenu({ currentPage, onNavigate }: MoreMenuProps) {
   )
 
   return (
-    <div className="more-menu-panel" role="dialog" aria-label="More sections">
-      <div className="more-menu-header">
-        <span>More Pages</span>
-      </div>
-      <div className="more-menu-grid">
-        {moreItems.map((item) => {
-          const isActive = item.id === currentPage
-          const variant = PAGE_VARIANTS[item.id] || 'blue'
+    <div className="mobile-sheet-overlay" onClick={() => onNavigate(currentPage)}>
+      <div
+        className="mobile-sheet-card fun-card"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label="More sections"
+      >
+        <div className="sheet-handle-bar" aria-hidden="true" />
+        <div className="sheet-header">
+          <h3>Explore More Trackers 🚀</h3>
+        </div>
+        <div className="sheet-grid">
+          {moreItems.map((item) => {
+            const isActive = item.id === currentPage
+            const variant = PAGE_VARIANTS[item.id] || 'blue'
 
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`more-menu-item ${isActive ? 'is-active' : ''}`}
-              onClick={() => onNavigate(item.id)}
-            >
-              <IconTile
-                icon={<NavIcon id={item.id} size={18} />}
-                variant={variant}
-                size="sm"
-                inset={isActive}
-              />
-              <span className="more-item-label">{item.label}</span>
-            </button>
-          )
-        })}
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`sheet-item-btn ${isActive ? 'is-active' : ''}`}
+                onClick={() => onNavigate(item.id)}
+              >
+                <IconTile
+                  icon={<NavIcon id={item.id} size={22} />}
+                  variant={variant}
+                  size="md"
+                  inset={isActive}
+                />
+                <span className="sheet-item-label">{item.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

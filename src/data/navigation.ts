@@ -62,7 +62,7 @@ export const MOBILE_PRIMARY_IDS: PageId[] = [
   'dashboard',
   'goals',
   'tasks',
-  'expenses',
+  'analytics',
 ]
 
 export const PAGE_VARIANTS: Record<PageId, 'blue' | 'pink' | 'green' | 'lavender' | 'peach' | 'yellow' | 'cream' | 'slate'> = {

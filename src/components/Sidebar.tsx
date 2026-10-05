@@ -11,18 +11,23 @@ type SidebarProps = {
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   return (
-    <aside className="sidebar">
-      <div className="brand" onClick={() => onNavigate('dashboard')} role="button" tabIndex={0}>
-        <div className="brand-mark-tile">
-          <Sparkles size={20} strokeWidth={2.2} />
+    <aside className="fun-sidebar" aria-label="Main Navigation">
+      <div
+        className="sidebar-brand-card"
+        onClick={() => onNavigate('dashboard')}
+        role="button"
+        tabIndex={0}
+      >
+        <div className="brand-icon-box">
+          <Sparkles size={22} className="brand-sparkle" />
         </div>
-        <div className="brand-copy">
-          <span className="brand-name">Daily Tracker</span>
-          <span className="brand-tagline">Mindful LifeOS</span>
+        <div className="brand-text-col">
+          <span className="brand-title">Daily Tracker</span>
+          <span className="brand-tag">Level Up Mode 🎮</span>
         </div>
       </div>
 
-      <nav className="sidebar-nav" aria-label="Main Navigation">
+      <nav className="sidebar-nav-list">
         {NAV_ITEMS.map((item) => {
           const isActive = item.id === currentPage
           const variant = PAGE_VARIANTS[item.id] || 'blue'
@@ -31,18 +36,18 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             <button
               key={item.id}
               type="button"
-              className={`nav-link ${isActive ? 'active' : ''}`}
+              className={`sidebar-nav-btn ${isActive ? 'is-active' : ''}`}
               onClick={() => onNavigate(item.id)}
               aria-current={isActive ? 'page' : undefined}
             >
               <IconTile
-                icon={<NavIcon id={item.id} size={17} />}
+                icon={<NavIcon id={item.id} size={18} />}
                 variant={variant}
-                size="xs"
+                size="sm"
                 inset={isActive}
               />
-              <span className="nav-label">{item.label}</span>
-              {isActive ? <span className="active-dot" aria-hidden="true" /> : null}
+              <span className="sidebar-nav-label">{item.label}</span>
+              {isActive ? <span className="active-pill-badge">Active</span> : null}
             </button>
           )
         })}

@@ -1,6 +1,6 @@
-import { Check } from 'lucide-react'
+import { Check, Calendar } from 'lucide-react'
 import { formatDueDate, isTaskOverdue } from '../tasks/dates'
-import { CATEGORY_LABELS, PRIORITY_LABELS, RECURRENCE_LABELS } from '../tasks/labels'
+import { CATEGORY_LABELS, PRIORITY_LABELS } from '../tasks/labels'
 import type { Task } from '../tasks/types'
 
 type TaskItemProps = {
@@ -10,37 +10,37 @@ type TaskItemProps = {
   onDelete: (task: Task) => void
 }
 
+const PRIORITY_EMOJIS = {
+  high: '🟠',
+  medium: '🟡',
+  low: '🟢',
+}
+
 export function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemProps) {
   const overdue = isTaskOverdue(task)
-  const className = [
-    'neu-task-widget',
-    task.completed ? 'is-completed' : '',
-    overdue ? 'is-overdue' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
 
   return (
-    <article className={className}>
-      <label className="neu-checkbox-wrap">
+    <article className={`fun-card task-card ${task.completed ? 'is-completed' : ''} ${overdue ? 'is-overdue' : ''}`}>
+      <label className="fun-checkbox-label">
         <input
           type="checkbox"
           checked={task.completed}
           onChange={() => onToggle(task.id)}
+          className="sr-only"
           aria-label={`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`}
         />
-        <span className="neu-checkbox-custom" aria-hidden="true">
-          {task.completed ? <Check size={13} strokeWidth={3} /> : null}
+        <span className={`fun-checkbox-custom ${task.completed ? 'checked' : ''}`}>
+          {task.completed ? <Check size={14} strokeWidth={3.5} className="check-icon-bounce" /> : null}
         </span>
       </label>
 
-      <div className="task-body">
-        <div className="task-top">
-          <h3 className="task-item-title">{task.title}</h3>
-          <div className="task-actions">
+      <div className="task-card-content">
+        <div className="task-card-header">
+          <h3 className="task-title-text">{task.title}</h3>
+          <div className="task-action-buttons">
             <button
               type="button"
-              className="neu-pill-btn text-btn-sm"
+              className="fun-mini-btn"
               onClick={() => onEdit(task)}
               aria-label={`Edit ${task.title}`}
             >
@@ -48,34 +48,34 @@ export function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemProps) {
             </button>
             <button
               type="button"
-              className="neu-pill-btn text-btn-sm danger"
+              className="fun-mini-btn danger"
               onClick={() => onDelete(task)}
               aria-label={`Delete ${task.title}`}
             >
-              Delete
+              ✕
             </button>
           </div>
         </div>
 
         {task.description ? (
-          <p className="task-description">{task.description}</p>
+          <p className="task-desc-text">{task.description}</p>
         ) : null}
 
-        <div className="task-meta">
-          <span className={`neu-meta-pill ${overdue ? 'pill-overdue' : ''}`}>
-            {formatDueDate(task.dueDate, task.dueTime)}
-          </span>
-          <span className={`neu-meta-pill priority-${task.priority}`}>
-            {PRIORITY_LABELS[task.priority]}
-          </span>
-          <span className="neu-meta-pill category-pill-tag">
-            {CATEGORY_LABELS[task.category]}
-          </span>
-          {task.recurrence !== 'none' ? (
-            <span className="neu-meta-pill recurring">
-              Repeats {RECURRENCE_LABELS[task.recurrence].toLowerCase()}
+        <div className="task-tags-row">
+          {task.dueDate ? (
+            <span className={`task-tag due-tag ${overdue ? 'tag-overdue' : ''}`}>
+              <Calendar size={12} /> {formatDueDate(task.dueDate, task.dueTime)}
             </span>
           ) : null}
+
+          <span className={`task-tag priority-tag priority-${task.priority}`}>
+            <span>{PRIORITY_EMOJIS[task.priority]}</span>
+            <span>{PRIORITY_LABELS[task.priority]}</span>
+          </span>
+
+          <span className="task-tag category-tag">
+            {CATEGORY_LABELS[task.category]}
+          </span>
         </div>
       </div>
     </article>

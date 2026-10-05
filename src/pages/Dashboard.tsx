@@ -1,392 +1,464 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
+  ArrowRight,
   BookOpen,
   Calendar,
+  CheckCircle2,
   CheckSquare2,
   Droplets,
   Flame,
   Footprints,
-  HeartPulse,
+  Plus,
   Sparkles,
+  Target,
   Wallet,
 } from 'lucide-react'
-import { CapsuleWidget } from '../components/CapsuleWidget'
 import { CircularProgress } from '../components/CircularProgress'
-import { IconTile } from '../components/IconTile'
-import { PageHeader } from '../components/PageHeader'
 import {
   calculateGoalProgress,
   formatGoalDate,
   getGoalDurationInfo,
   getGoalStats,
   getNextDeadlineGoal,
-  getUpcomingGoals,
 } from '../goals/dates'
-import { CATEGORY_DETAILS } from '../goals/labels'
 import { useGoals } from '../hooks/useGoals'
 import { useTasks } from '../hooks/useTasks'
 import { getTodayProgress } from '../tasks/dates'
 import type { PageId } from '../types'
+
+function getDashboardGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good Morning, Chandan 👋'
+  if (hour < 17) return 'Good Afternoon, Chandan ☀️'
+  return 'Good Evening, Chandan 🌙'
+}
 
 type DashboardProps = {
   onNavigate: (page: PageId) => void
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { tasks } = useTasks()
+  const { tasks, toggleTask } = useTasks()
   const { goals } = useGoals()
 
-  // Live time for the cute digital clock widget
-  const [currentTime, setCurrentTime] = useState(() => {
-    const now = new Date()
-    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  // Dynamic greeting
+  const [greeting] = useState(getDashboardGreeting)
+
+  // Local state for water & walking quick increments
+  const [waterGlasses, setWaterGlasses] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lifeos.water')
+      return stored !== null ? Number(stored) : 5
+    } catch {
+      return 5
+    }
   })
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date()
-      setCurrentTime(
-        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-      )
-    }, 10000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const [currentDate] = useState(() => new Date())
-  const dayName = currentDate.toLocaleDateString(undefined, { weekday: 'long' })
-  const dateFormatted = currentDate.toLocaleDateString(undefined, {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
+  const [steps, setSteps] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lifeos.walking')
+      return stored !== null ? Number(stored) : 6420
+    } catch {
+      return 6420
+    }
   })
 
-  const todayProgress = getTodayProgress(tasks)
+  const [studyMin] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lifeos.learning')
+      return stored !== null ? Number(stored) : 45
+    } catch {
+      return 45
+    }
+  })
+
+  const [expenseTotal] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lifeos.expenses')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          return parsed.reduce((sum: number, it: { amount: number }) => sum + it.amount, 0)
+        }
+      }
+      return 850
+    } catch {
+      return 850
+    }
+  })
+
+  function handleAddWater(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (waterGlasses < 8) {
+      const next = waterGlasses + 1
+      setWaterGlasses(next)
+      try {
+        localStorage.setItem('lifeos.water', String(next))
+      } catch {
+        // storage unavailable
+      }
+    }
+  }
+
+  function handleAddSteps(e: React.MouseEvent) {
+    e.stopPropagation()
+    const next = steps + 500
+    setSteps(next)
+    try {
+      localStorage.setItem('lifeos.walking', String(next))
+    } catch {
+      // storage unavailable
+    }
+  }
+
+  const todayTasksProgress = getTodayProgress(tasks)
   const goalStats = useMemo(() => getGoalStats(goals), [goals])
   const nextDeadline = useMemo(() => getNextDeadlineGoal(goals), [goals])
   const nextDeadlineInfo = useMemo(
     () => (nextDeadline ? getGoalDurationInfo(nextDeadline) : null),
     [nextDeadline],
   )
-  const upcomingGoals = useMemo(() => getUpcomingGoals(goals, 4), [goals])
+
+  // Overall today's progress score
+  const todayScore = Math.round(
+    ((todayTasksProgress.total > 0
+      ? (todayTasksProgress.completed / todayTasksProgress.total) * 50
+      : 30) +
+      (waterGlasses / 8) * 25 +
+      (steps / 8000) * 25),
+  )
+
+  const motivationalMessage =
+    todayScore >= 80
+      ? "You're crushing it today! 🔥"
+      : todayScore >= 50
+      ? 'Keep going! Almost there! 🚀'
+      : "Let's make today count! 💪"
+
+  // Top 3 actionable tasks
+  const pendingTasks = tasks.filter((t) => !t.completed).slice(0, 3)
+  const completedTodayTasks = tasks.filter((t) => t.completed).slice(0, 2)
+  const previewTasks = [...pendingTasks, ...completedTodayTasks].slice(0, 3)
 
   return (
     <section className="page dashboard-page">
-      <PageHeader
-        title="Dashboard"
-        subtitle={`Your calm overview for ${dayName}, ${dateFormatted}.`}
-      />
+      {/* Top Greeting */}
+      <div className="dashboard-greeting-wrap">
+        <h1 className="greeting-title">{greeting}</h1>
+        <p className="greeting-subtitle">
+          Ready to conquer today? Here is your daily mission control. ⚡
+        </p>
+      </div>
 
-      {/* Hero Widgets Row (Styled directly after the reference image) */}
-      <div className="dashboard-hero-grid">
-        {/* 1. Digital Clock & Date Widget (Top-Left in reference image) */}
-        <div className="hero-clock-widget">
-          <div className="clock-recessed-display">
-            <span className="clock-digits">{currentTime}</span>
-            <div className="clock-live-dot" aria-hidden="true" />
+      {/* Hero Today's Progress Card */}
+      <div className="fun-hero-card dashboard-hero-card">
+        <div className="hero-progress-left">
+          <div className="hero-progress-badge">
+            <Sparkles size={18} />
+            <span>Today's Progress</span>
           </div>
-
-          <div className="clock-meta">
-            <span className="clock-date-line">
-              <Calendar size={13} className="clock-cal-icon" /> {dateFormatted}
-            </span>
-            <span className="clock-day-pill">{dayName}</span>
+          <div className="hero-score-row">
+            <span className="hero-score-val">{todayScore}%</span>
+            <span className="hero-motivation">{motivationalMessage}</span>
+          </div>
+          <div className="fun-progress-track hero-track">
+            <div
+              className="fun-progress-fill hero-progress-fill"
+              style={{ width: `${todayScore}%` }}
+            />
           </div>
         </div>
 
-        {/* 2. Goals Circular Progress Widget (Inspired by circular gauge in reference) */}
-        <div
-          className="hero-goals-widget neu-card-interactive"
-          onClick={() => onNavigate('goals')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              onNavigate('goals')
-            }
-          }}
-          aria-label="Goals Overview Widget. Click to view goals."
-        >
-          <div className="widget-header-row">
-            <div className="widget-title-group">
-              <span className="widget-subtitle-eyebrow">GOAL PROGRESS</span>
-              <h3 className="widget-heading">Today's Goals</h3>
-            </div>
-            <IconTile icon={<Sparkles size={16} />} variant="pink" size="xs" />
-          </div>
-
-          <div className="goals-circular-body">
-            <CircularProgress
-              percent={goalStats.overallProgress}
-              size={96}
-              strokeWidth={8}
-              color="var(--pastel-pink-dark)"
-            >
-              <div className="circular-center-text">
-                <span className="center-percent">{goalStats.overallProgress}%</span>
-                <span className="center-sublabel">Done</span>
-              </div>
-            </CircularProgress>
-
-            <div className="goals-mini-stat-col">
-              <div className="mini-stat-row">
-                <span className="stat-bullet bullet-active" />
-                <span className="mini-stat-label">Active:</span>
-                <strong>{goalStats.active}</strong>
-              </div>
-              <div className="mini-stat-row">
-                <span className="stat-bullet bullet-done" />
-                <span className="mini-stat-label">Done:</span>
-                <strong>{goalStats.completed}</strong>
-              </div>
-              <div className="mini-stat-row">
-                <span className="stat-bullet bullet-overdue" />
-                <span className="mini-stat-label">Overdue:</span>
-                <strong className={goalStats.overdue > 0 ? 'text-danger' : ''}>
-                  {goalStats.overdue}
-                </strong>
-              </div>
-            </div>
-          </div>
-
-          {nextDeadline && nextDeadlineInfo ? (
-            <div className="widget-next-deadline-row">
-              <span className="next-label">Next:</span>
-              <span className="next-goal-name">
-                {CATEGORY_DETAILS[nextDeadline.category]?.icon} {nextDeadline.title}
-              </span>
-              <span className="next-goal-due">({nextDeadlineInfo.statusText})</span>
-            </div>
-          ) : (
-            <div className="widget-next-deadline-row is-empty">
-              <span>All goals on track</span>
-            </div>
-          )}
-        </div>
-
-        {/* 3. Two Vertical Capsule Widgets (Directly matching middle-left pills in reference) */}
-        <div className="hero-capsules-group">
-          {/* Water Capsule */}
-          <CapsuleWidget
-            icon={<Droplets size={16} />}
-            percent={75}
-            label="Water"
-            sublabel="6 / 8 glasses"
-            variant="blue"
-            onClick={() => onNavigate('water')}
-          />
-
-          {/* Activity / Battery Streak Capsule */}
-          <CapsuleWidget
-            icon={<HeartPulse size={16} />}
-            percent={85}
-            label="Energy"
-            sublabel="Active Streak"
-            variant="green"
-            onClick={() => onNavigate('activity')}
-          />
+        <div className="hero-circular-meter">
+          <CircularProgress
+            percent={todayScore}
+            size={110}
+            strokeWidth={10}
+            color="var(--pastel-blue)"
+          >
+            <span className="meter-center-pct">{todayScore}%</span>
+          </CircularProgress>
         </div>
       </div>
 
-      {/* Secondary Widgets Grid */}
-      <div className="dashboard-widgets-grid">
-        {/* Today's Tasks Widget */}
-        <article
-          className="neu-widget-card is-clickable"
-          onClick={() => onNavigate('tasks')}
+      {/* Tasks & Goals Split Row */}
+      <div className="dashboard-main-columns">
+        {/* Today's Tasks */}
+        <div className="fun-card dashboard-tasks-card">
+          <div className="card-header-row">
+            <div className="card-header-left">
+              <CheckSquare2 size={22} className="header-icon-green" />
+              <h3>Today's Tasks</h3>
+            </div>
+            <button
+              type="button"
+              className="card-header-link"
+              onClick={() => onNavigate('tasks')}
+            >
+              <span>View All</span>
+              <ArrowRight size={15} />
+            </button>
+          </div>
+
+          <div className="dashboard-tasks-list">
+            {previewTasks.length === 0 ? (
+              <div className="empty-tasks-box">
+                <span className="empty-emoji">🎉</span>
+                <strong>All tasks completed!</strong>
+                <p>Enjoy your free time or add a new challenge.</p>
+                <button
+                  type="button"
+                  className="fun-btn fun-btn-soft btn-sm"
+                  onClick={() => onNavigate('tasks')}
+                >
+                  <Plus size={15} />
+                  <span>Add Task</span>
+                </button>
+              </div>
+            ) : (
+              previewTasks.map((t) => (
+                <div
+                  key={t.id}
+                  className={`dash-task-item ${t.completed ? 'is-done' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className={`dash-checkbox ${t.completed ? 'checked' : ''}`}
+                    onClick={() => toggleTask(t.id)}
+                    aria-label={`Toggle ${t.title}`}
+                  >
+                    {t.completed ? <CheckCircle2 size={16} /> : null}
+                  </button>
+                  <div className="dash-task-info">
+                    <span className="dash-task-title">{t.title}</span>
+                    {t.dueDate ? (
+                      <span className="dash-task-due">
+                        <Calendar size={12} /> {t.dueTime ? `${t.dueTime}` : 'Today'}
+                      </span>
+                    ) : null}
+                  </div>
+                  {t.priority === 'high' ? (
+                    <span className="dash-priority-pill">High</span>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Goals Progress */}
+        <div className="fun-card dashboard-goals-card">
+          <div className="card-header-row">
+            <div className="card-header-left">
+              <Target size={22} className="header-icon-pink" />
+              <h3>Active Goals</h3>
+            </div>
+            <button
+              type="button"
+              className="card-header-link"
+              onClick={() => onNavigate('goals')}
+            >
+              <span>View All</span>
+              <ArrowRight size={15} />
+            </button>
+          </div>
+
+          {nextDeadline ? (
+            <div
+              className="dash-goal-spotlight"
+              onClick={() => onNavigate('goals')}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="dash-goal-spotlight-top">
+                <div className="dash-goal-titles">
+                  <span className="dash-goal-category-tag">{nextDeadline.category}</span>
+                  <strong className="dash-goal-name">{nextDeadline.title}</strong>
+                </div>
+                <span className="dash-goal-pct">
+                  {calculateGoalProgress(nextDeadline)}%
+                </span>
+              </div>
+
+              <div className="fun-progress-track">
+                <div
+                  className="fun-progress-fill goal-progress-fill"
+                  style={{ width: `${calculateGoalProgress(nextDeadline)}%` }}
+                />
+              </div>
+
+              <div className="dash-goal-footer">
+                <span className="dash-goal-deadline">
+                  📅 {nextDeadlineInfo?.statusText || formatGoalDate(nextDeadline.endDate)}
+                </span>
+                <span className="dash-goal-remaining">
+                  {nextDeadlineInfo?.overdueDays ? '⚠️ Overdue' : '🚀 In Progress'}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-tasks-box">
+              <span className="empty-emoji">🎯</span>
+              <strong>No active goals</strong>
+              <p>Set a goal to push your limits and level up!</p>
+              <button
+                type="button"
+                className="fun-btn fun-btn-soft btn-sm"
+                onClick={() => onNavigate('goals')}
+              >
+                <Plus size={15} />
+                <span>+ Add Goal</span>
+              </button>
+            </div>
+          )}
+
+          <div className="dash-goals-summary-strip">
+            <div className="mini-stat">
+              <span className="mini-stat-val">{goalStats.active}</span>
+              <span className="mini-stat-lbl">Active</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-stat-val">{goalStats.completed}</span>
+              <span className="mini-stat-lbl">Completed</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-stat-val">{goalStats.total}</span>
+              <span className="mini-stat-lbl">Total</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Today's Quick Trackers Row (Water, Walking, Learning, Expenses) */}
+      <div className="dashboard-quick-grid">
+        {/* 1. Water Widget */}
+        <div
+          className="fun-card quick-tracker-card water-quick-card"
+          onClick={() => onNavigate('water')}
           role="button"
           tabIndex={0}
         >
-          <div className="neu-widget-top">
-            <span className="neu-widget-title">TODAY'S TASKS</span>
-            <IconTile icon={<CheckSquare2 size={16} />} variant="green" size="xs" />
+          <div className="quick-tracker-top">
+            <div className="quick-icon-circle icon-blue">
+              <Droplets size={22} />
+            </div>
+            <button
+              type="button"
+              className="quick-add-btn"
+              onClick={handleAddWater}
+              title="Add 1 glass of water"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+            </button>
           </div>
-
-          <div className="neu-widget-body">
-            <div className="neu-widget-val">
-              {todayProgress.completed} / {todayProgress.total} completed
-            </div>
-
-            <div className="neu-track-inset" aria-hidden="true">
-              <div
-                className="neu-fill-pastel-green"
-                style={{ width: `${todayProgress.percent}%` }}
-              />
-            </div>
-
-            <div className="neu-widget-note">
-              {todayProgress.total === 0
-                ? 'No tasks due today. Tap to add one.'
-                : `${todayProgress.percent}% completed`}
-            </div>
+          <div className="quick-tracker-info">
+            <span className="quick-val">{waterGlasses} / 8</span>
+            <span className="quick-lbl">Water Glasses</span>
           </div>
-        </article>
+          <div className="fun-progress-track mini-track">
+            <div
+              className="fun-progress-fill"
+              style={{
+                width: `${(waterGlasses / 8) * 100}%`,
+                backgroundColor: 'var(--pastel-blue)',
+              }}
+            />
+          </div>
+        </div>
 
-        {/* Walking Widget */}
-        <article
-          className="neu-widget-card is-clickable"
+        {/* 2. Walking Widget */}
+        <div
+          className="fun-card quick-tracker-card"
           onClick={() => onNavigate('walking')}
           role="button"
           tabIndex={0}
         >
-          <div className="neu-widget-top">
-            <span className="neu-widget-title">WALKING</span>
-            <IconTile icon={<Footprints size={16} />} variant="yellow" size="xs" />
+          <div className="quick-tracker-top">
+            <div className="quick-icon-circle icon-green">
+              <Footprints size={22} />
+            </div>
+            <button
+              type="button"
+              className="quick-add-btn"
+              onClick={handleAddSteps}
+              title="Add 500 steps"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+            </button>
           </div>
-
-          <div className="neu-widget-body">
-            <div className="neu-widget-val">6,420 steps</div>
-            <div className="neu-widget-note">4.8 km · 80% of daily goal</div>
+          <div className="quick-tracker-info">
+            <span className="quick-val">{steps.toLocaleString()}</span>
+            <span className="quick-lbl">Walking Steps</span>
           </div>
-        </article>
-
-        {/* Expenses Widget */}
-        <article
-          className="neu-widget-card is-clickable"
-          onClick={() => onNavigate('expenses')}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="neu-widget-top">
-            <span className="neu-widget-title">TODAY'S EXPENSE</span>
-            <IconTile icon={<Wallet size={16} />} variant="peach" size="xs" />
+          <div className="fun-progress-track mini-track">
+            <div
+              className="fun-progress-fill"
+              style={{
+                width: `${Math.min(100, (steps / 8000) * 100)}%`,
+                backgroundColor: 'var(--pastel-green)',
+              }}
+            />
           </div>
+        </div>
 
-          <div className="neu-widget-body">
-            <div className="neu-widget-val">₹850</div>
-            <div className="neu-widget-note">Within mindful budget</div>
-          </div>
-        </article>
-
-        {/* Learning Widget */}
-        <article
-          className="neu-widget-card is-clickable"
+        {/* 3. Learning Widget */}
+        <div
+          className="fun-card quick-tracker-card"
           onClick={() => onNavigate('learning')}
           role="button"
           tabIndex={0}
         >
-          <div className="neu-widget-top">
-            <span className="neu-widget-title">LEARNING</span>
-            <IconTile icon={<BookOpen size={16} />} variant="lavender" size="xs" />
+          <div className="quick-tracker-top">
+            <div className="quick-icon-circle icon-lavender">
+              <BookOpen size={22} />
+            </div>
+            <span className="quick-badge-pill streak-pill">
+              <Flame size={12} /> 7d
+            </span>
           </div>
-
-          <div className="neu-widget-body">
-            <div className="neu-widget-val">45 min</div>
-            <div className="neu-widget-note">Focused study session</div>
+          <div className="quick-tracker-info">
+            <span className="quick-val">{studyMin} min</span>
+            <span className="quick-lbl">Study Focus</span>
           </div>
-        </article>
+          <div className="fun-progress-track mini-track">
+            <div
+              className="fun-progress-fill"
+              style={{
+                width: `${Math.min(100, (studyMin / 60) * 100)}%`,
+                backgroundColor: 'var(--pastel-purple)',
+              }}
+            />
+          </div>
+        </div>
 
-        {/* Current Streak Widget */}
-        <article
-          className="neu-widget-card is-clickable"
-          onClick={() => onNavigate('activity')}
+        {/* 4. Expense Widget */}
+        <div
+          className="fun-card quick-tracker-card"
+          onClick={() => onNavigate('expenses')}
           role="button"
           tabIndex={0}
         >
-          <div className="neu-widget-top">
-            <span className="neu-widget-title">CONSISTENCY</span>
-            <IconTile icon={<Flame size={16} />} variant="pink" size="xs" />
+          <div className="quick-tracker-top">
+            <div className="quick-icon-circle icon-peach">
+              <Wallet size={22} />
+            </div>
+            <span className="quick-badge-pill">Today</span>
           </div>
-
-          <div className="neu-widget-body">
-            <div className="neu-widget-val">5 Days</div>
-            <div className="neu-widget-note">Consistency streak active</div>
+          <div className="quick-tracker-info">
+            <span className="quick-val">₹{expenseTotal}</span>
+            <span className="quick-lbl">Daily Expenses</span>
           </div>
-        </article>
-
-        {/* Cute Companion Widget (Inspired by (> . <) in the reference image) */}
-        <article className="neu-widget-card cute-companion-widget">
-          <div className="cute-face-display">
-            <span className="cute-eyes">&gt;</span>
-            <span className="cute-nose">◡</span>
-            <span className="cute-eyes">&lt;</span>
-            <span className="cute-blush left" />
-            <span className="cute-blush right" />
+          <div className="fun-progress-track mini-track">
+            <div
+              className="fun-progress-fill"
+              style={{
+                width: `${Math.min(100, (expenseTotal / 1500) * 100)}%`,
+                backgroundColor: 'var(--pastel-orange)',
+              }}
+            />
           </div>
-          <p className="cute-copy">You're doing wonderful today!</p>
-        </article>
-      </div>
-
-      {/* Upcoming Goals Section */}
-      <section className="dashboard-section upcoming-goals-section">
-        <div className="section-toolbar">
-          <div>
-            <span className="widget-subtitle-eyebrow">UPCOMING DEADLINES</span>
-            <h2 className="section-heading">Upcoming Goals</h2>
-          </div>
-          <button
-            type="button"
-            className="neu-pill-btn secondary"
-            onClick={() => onNavigate('goals')}
-          >
-            View all goals →
-          </button>
         </div>
-
-        {upcomingGoals.length === 0 ? (
-          <div className="empty-upcoming-goals-card neu-inset-well">
-            <p>No upcoming goal deadlines right now.</p>
-            <button
-              type="button"
-              className="neu-pill-btn primary"
-              onClick={() => onNavigate('goals')}
-            >
-              + Create Goal
-            </button>
-          </div>
-        ) : (
-          <div className="upcoming-goals-grid">
-            {upcomingGoals.map((goal) => {
-              const duration = getGoalDurationInfo(goal)
-              const categoryConfig = CATEGORY_DETAILS[goal.category] || CATEGORY_DETAILS.Other
-              const progress = calculateGoalProgress(goal)
-
-              return (
-                <article
-                  key={goal.id}
-                  className="upcoming-goal-card neu-card-interactive"
-                  onClick={() => onNavigate('goals')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      onNavigate('goals')
-                    }
-                  }}
-                >
-                  <div className="upcoming-card-top">
-                    <span className="upcoming-category-icon">
-                      {categoryConfig.icon}
-                    </span>
-                    <div className="upcoming-card-titles">
-                      <h3>{goal.title}</h3>
-                      <p className="upcoming-deadline-copy">
-                        {formatGoalDate(goal.endDate)} ·{' '}
-                        <span
-                          className={
-                            duration.statusType === 'overdue' ? 'text-danger' : 'text-accent'
-                          }
-                        >
-                          {duration.statusText}
-                        </span>
-                      </p>
-                    </div>
-                    <span className="upcoming-percent-badge">{progress}%</span>
-                  </div>
-
-                  <div className="neu-track-inset" aria-hidden="true">
-                    <div
-                      className="neu-fill-pastel-blue"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        )}
-      </section>
+      </div>
     </section>
   )
 }
